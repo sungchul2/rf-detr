@@ -106,7 +106,7 @@ class NormalizedWrapper(nn.Module):
         x = F.normalize(x, self.means, self.stds)
         return self.model(x)
 
-def export_coreml(output_dir, model, input_names, input_tensors, output_names, stds, means, precision=ct.precision.FLOAT32, backbone_only=False):
+def export_coreml(output_dir, model, input_names, input_tensors, output_names, stds, means, precision=ct.precision.FLOAT32, backbone_only=False, segmentation_head=False):
     export_name = "backbone_model" if backbone_only else "inference_model"
     output_file = os.path.join(output_dir, f"{export_name}.mlpackage")
 
@@ -118,6 +118,13 @@ def export_coreml(output_dir, model, input_names, input_tensors, output_names, s
     wrapped.eval()
     traced = torch.jit.trace(wrapped, input_tensors)
 
+    if backbone_only:
+        outputs = [ct.TensorType(name=output_names[0])]
+    elif segmentation_head:
+        outputs = [ct.TensorType(name=output_names[0]), ct.TensorType(name=output_names[1]), ct.TensorType(name=output_names[2])]
+    else:
+        outputs = [ct.TensorType(name=output_names[0]), ct.TensorType(name=output_names[1])]
+
     # 3. Convert to Core ML
     coreml_model = ct.convert(
         traced,
@@ -127,7 +134,7 @@ def export_coreml(output_dir, model, input_names, input_tensors, output_names, s
             scale=1/255.0,
             color_layout="RGB",
         )],
-        outputs=[ct.TensorType(name=output_names[0])] if backbone_only else [ct.TensorType(name=output_names[0]), ct.TensorType(name=output_names[1])],
+        outputs=outputs,
         convert_to="mlprogram",
         compute_precision=precision,
 

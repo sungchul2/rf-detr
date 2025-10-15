@@ -540,7 +540,12 @@ class Model:
 
         input_tensors = make_infer_image(infer_dir, shape, batch_size, device).to(device)
         input_names = ['input']
-        output_names = ['features'] if backbone_only else ['dets', 'labels']
+        if backbone_only:
+            output_names = ['features']
+        elif self.args.segmentation_head:
+            output_names = ['dets', 'labels', 'masks']
+        else:
+            output_names = ['dets', 'labels']
         dynamic_axes = None
         self.model.eval()
         with torch.no_grad():
@@ -612,13 +617,24 @@ class Model:
 
         input_tensors = make_infer_image(infer_dir, shape, batch_size, device).to(device)
         input_names = ['input']
-        output_names = ['features'] if backbone_only else ['dets', 'labels']
+        if backbone_only:
+            output_names = ['features']
+        elif self.args.segmentation_head:
+            output_names = ['dets', 'labels', 'masks']
+        else:
+            output_names = ['dets', 'labels']
         dynamic_axes = None
         self.model.eval()
         with torch.no_grad():
             if backbone_only:
                 features = model(input_tensors)
                 print(f"PyTorch inference output shape: {features.shape}")
+            elif self.args.segmentation_head:
+                outputs = model(input_tensors)
+                dets = outputs['pred_boxes']
+                labels = outputs['pred_logits']
+                masks = outputs['pred_masks']
+                print(f"PyTorch inference output shapes - Boxes: {dets.shape}, Labels: {labels.shape}, Masks: {masks.shape}")
             else:
                 outputs = model(input_tensors)
                 dets = outputs['pred_boxes']
@@ -637,6 +653,7 @@ class Model:
             stds=stds,
             means=means,
             backbone_only=backbone_only,
+            segmentation_head=self.args.segmentation_head,
             **kwargs
         )
 
