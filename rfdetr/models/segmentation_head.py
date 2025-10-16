@@ -88,7 +88,7 @@ class SegmentationHead(nn.Module):
         # query features: [(B, N, C)] for each decoder layer
         # output: (B, N, H*r, W*r)
         target_size = (image_size[0] // self.downsample_ratio, image_size[1] // self.downsample_ratio)
-        spatial_features = F.interpolate(spatial_features, size=target_size, mode='bilinear', align_corners=False)
+        spatial_features = F.interpolate(spatial_features, size=target_size, mode='bilinear', align_corners=True)
 
         mask_logits = []
         if not skip_blocks:
@@ -108,7 +108,7 @@ class SegmentationHead(nn.Module):
         assert len(query_features) == 1, "at export time, segmentation head expects exactly one query feature"
         
         target_size = (image_size[0] // self.downsample_ratio, image_size[1] // self.downsample_ratio)
-        spatial_features = F.interpolate(spatial_features, size=target_size, mode='bilinear', align_corners=False)
+        spatial_features = F.interpolate(spatial_features, size=target_size, mode='bilinear', align_corners=True)
 
         if not skip_blocks:
             for block in self.blocks:

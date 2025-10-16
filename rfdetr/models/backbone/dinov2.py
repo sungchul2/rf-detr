@@ -104,6 +104,7 @@ class DinoV2(nn.Module):
                     num_windows=num_windows,
                     window_block_indexes=window_block_indexes,
                     gradient_checkpointing=gradient_checkpointing,
+                    _attn_implementation="sdpa",
                 )
             else:
                 windowed_dino_config = WindowedDinov2WithRegistersConfig(
@@ -112,6 +113,7 @@ class DinoV2(nn.Module):
                     window_block_indexes=window_block_indexes,
                     num_register_tokens=0,
                     gradient_checkpointing=gradient_checkpointing,
+                    _attn_implementation="sdpa",
                 )
             self.encoder = WindowedDinov2WithRegistersBackbone.from_pretrained(
                 name,
@@ -149,9 +151,9 @@ class DinoV2(nn.Module):
             patch_pos_embed = F.interpolate(
                 patch_pos_embed,
                 size=(height, width),
-                mode="bicubic",
+                mode="bilinear", # coreml does not support bicubic
                 align_corners=False,
-                antialias=True,
+                antialias=False, # for fast inference
             )
 
             # Reshape back

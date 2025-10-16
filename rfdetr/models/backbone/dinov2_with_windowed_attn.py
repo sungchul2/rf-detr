@@ -265,14 +265,14 @@ class WindowedDinov2WithRegistersEmbeddings(nn.Module):
         # Store original dtype for restoration after interpolation
         target_dtype = patch_pos_embed.dtype
 
-        # Interpolate at float32 precision
+        # Interpolate 
         patch_pos_embed = nn.functional.interpolate(
-            patch_pos_embed.to(dtype=torch.float32),
-            size=(torch_int(height), torch_int(width)),  # Explicit size instead of scale_factor
-            mode="bicubic",
+            patch_pos_embed,
+            size=(torch_int(height), torch_int(width)),
+            mode="bilinear", # coreml does not support bicubic
             align_corners=False,
-            antialias=True,
-        ).to(dtype=target_dtype)
+            antialias=False, # for fast inference
+        )
 
         # Validate output dimensions if not tracing
         if not torch.jit.is_tracing():

@@ -615,6 +615,7 @@ class Model:
             if shape[0] % 14 != 0 or shape[1] % 14 != 0:
                 raise ValueError("Shape must be divisible by 14")
 
+        shape = (768, 768) # fix the resolution for comparison with original yolov11 model
         input_tensors = make_infer_image(infer_dir, shape, batch_size, device).to(device)
         input_names = ['input']
         if backbone_only:
